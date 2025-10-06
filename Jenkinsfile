@@ -1,8 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'maven:3.9.6-eclipse-temurin-17'  // image resmi Maven dengan Java 17
+            args '-v /var/run/docker.sock:/var/run/docker.sock' // biar bisa build docker juga
+        }
+    }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // ID sesuai yang ada di Jenkins
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         IMAGE_NAME = 'mondaysee/jenkins-maven-demo'
     }
 
