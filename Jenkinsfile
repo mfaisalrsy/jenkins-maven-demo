@@ -1,57 +1,36 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.6-eclipse-temurin-17'  // image resmi Maven dengan Java 17
-            args '-v /var/run/docker.sock:/var/run/docker.sock' // biar bisa build docker juga
-        }
-    }
+    agent any
 
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        IMAGE_NAME = 'mondaysee/jenkins-maven-demo'
+    tools {
+        maven 'maven-3.9'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Build jar') {
             steps {
-                git branch: 'main', url: 'https://github.com/mfaisalrsy/jenkins-maven-demo.git'
+                sh 'mvn package'
             }
         }
 
-        stage('Build with Maven') {
-            steps {
-                sh 'mvn clean package'
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
                 script {
-                    sh 'docker build -t $IMAGE_NAME:1.0 .'
-                    sh 'docker tag $IMAGE_NAME:1.0 $IMAGE_NAME:1.1'
-                    sh 'docker tag $IMAGE_NAME:1.0 $IMAGE_NAME:2.0'
+                    echo "Building the Docker image..."
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credential', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "docker build -t mondaysee/demo-app:jma-2.0 ."
+                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
+                        sh "docker push azeyna/demo-app:jma-2.0"
+                    }
                 }
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Deploy') {
             steps {
                 script {
-                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                    sh "docker push $IMAGE_NAME:1.0"
-                    sh "docker push $IMAGE_NAME:1.1"
-                    sh "docker push $IMAGE_NAME:2.0"
+                    echo "Deploying the application..."
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Build and push successful!'
-        }
-        failure {
-            echo 'Build failed.'
         }
     }
 }
