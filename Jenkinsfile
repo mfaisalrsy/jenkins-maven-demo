@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-cred') // ID dari Jenkins credentials
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // ID sesuai yang ada di Jenkins
         IMAGE_NAME = 'mondaysee/jenkins-maven-demo'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/mfaisalrsy/jenkins-maven-demo.git'
+                git branch: 'main', url: 'https://github.com/mfaisalrsy/jenkins-maven-demo.git'
             }
         }
 
